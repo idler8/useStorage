@@ -1,9 +1,8 @@
 {
   "name": "rh-storage",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "同步获取最新的localStorage数据",
-  "main": "index.min.js",
-  "module": "index.js",
+  "main": "index.esm.js",
   "repository": "https://github.com/idler8/useStorage",
   "author": "code@idler8.com",
   "license": "MIT",
@@ -12,6 +11,8 @@
     "rollup-plugin-terser": "^7.0.2"
   },
   "scripts": {
-    "build": "rollup index.js --format umd --name useStorage --file index.min.js --external react --plugin rollup-plugin-terser"
-  }
+    "umd": "rollup index.js --format umd --name useStorage --file index.umd.js --external react --plugin rollup-plugin-terser",
+    "esm": "rollup index.js --format module --file index.esm.js --external react --plugin rollup-plugin-terser"
+  },
+  "files":["index.min.js","index.esm.js"]
 }
