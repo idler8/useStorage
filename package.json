@@ -1,6 +1,6 @@
 {
   "name": "rh-storage",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "同步获取最新的localStorage数据",
   "main": "index.min.js",
   "module": "index.js",
