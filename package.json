@@ -1,6 +1,6 @@
 {
   "name": "rh-storage",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "description": "同步获取最新的localStorage数据",
   "main": "index.js",
   "repository": "https://github.com/idler8/useStorage",

@@ -1,34 +1,37 @@
 import { useCallback, useEffect, useState } from 'react';
-const Cache = {};
-const Listener = [];
-// TODO 是否有必要处理
-// window.addEventListener('storage', ({ key, newValue }) => {
-//   if (!key) return Object.keys(Cache).forEach(key => delete Cache[key]);
-//   Cache[key] = newValue;
-//   Listener.forEach((fn) => fn(key));
-// });
-export function setStorage(key, value, ignoreEvents) {
-  localStorage[key] = JSON.stringify(value);
-  Cache[key] = value;
-  if (!ignoreEvents) Listener.forEach((fn) => fn(key));
+// TODO 多页面监听
+export function factory(getItem, setItem) {
+  const Cache = {};
+  const Listener = [];
+  function setStorage(key, value, ignoreEvents) {
+    setItem(key, value);
+    Cache[key] = value;
+    if (!ignoreEvents) Listener.forEach((fn) => fn(key));
+  }
+  function getStorage(key) {
+    return Cache[key] || getItem(key);
+  }
+  function useStorage(key) {
+    const [ value, setValue ] = useState(() => getStorage(key));
+    const updateValue = useCallback((value) => setStorage(key, value), [ key ]);
+    useEffect(() => {
+      setValue(getStorage(key));
+      const listenFunc = (keyChange) => keyChange === key && setValue(Cache[key]);
+      Listener.push(listenFunc);
+      return () => Listener.splice(Listener.indexOf(listenFunc), 1);
+    }, [ key ]);
+    return [ value, updateValue ];
+  }
+  useStorage.setStorage = setStorage;
+  useStorage.getStorage = getStorage;
+  return useStorage;
 }
-export function getStorage(key) {
+export default factory(function(key, value) {
+  localStorage[key] = JSON.stringify(value);
+}, function(key) {
   try {
-    return Cache[key] || JSON.parse(localStorage[key]);
+    return JSON.parse(localStorage[key]);
   } catch (e) {
     return null;
   }
-}
-export default function useStorage(key) {
-  const [ value, setValue ] = useState(Cache[key] || (() => Cache[key] = getStorage(key)));
-  const updateValue = useCallback((value) => {
-    setStorage(key, value);
-  }, [ key ]);
-  useEffect(() => {
-    setValue(Cache[key]);
-    const listenFunc = (keyChange) => keyChange === key && setValue(Cache[key]);
-    Listener.push(listenFunc);
-    return () => Listener.splice(Listener.indexOf(listenFunc), 1);
-  }, [ key ]);
-  return [ value, updateValue ];
-}
+});
