@@ -7,8 +7,8 @@ function Userinfo(){
     return JSON.stringify(userinfo);
 }
 function Login(){
-    const [ useinfo ,setUserinfo ] = useStorage('userinfo');
-    return <div onClick={()=>setUserinfo({token:'abc',nickname:'def'})}>Login</div>
+    const [ ,setUserinfo ] = useStorage('userinfo');
+    return <div onClick={()=>setUserinfo({ token:'abc', nickname:'def' })}>Login</div>
 }
 function Layout(){
     return <>
@@ -19,10 +19,9 @@ function Layout(){
 ```
 # 扩展用法（sessionStorage）
 ```javascript
-import React from 'react';
 import { hookFactory, getWindowStorage } from 'rh-storage'
 const useStorage = hookFactory(getWindowStorage(window.sessionStorage));
-export default useStoragel
+export default useStorage
 ```
 
 # 复杂用法（crypto）
@@ -30,7 +29,7 @@ export default useStoragel
 import AES from 'crypto-js/aes';
 import UTF8 from 'crypto-js/enc-utf8';
 const AESKey = 'www.idler8.com';
-export default function getWindowStorage(Storage){
+function getCryptoStorage(Storage){
     return {
         getItem(key){
             try {
@@ -50,4 +49,6 @@ export default function getWindowStorage(Storage){
         }
     }
 }
+const cryptoStorage = getCryptoStorage(window.sessionStorage)
+export default cryptoStorage;
 ```
