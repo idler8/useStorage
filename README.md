@@ -19,8 +19,8 @@ function Layout(){
 ```
 # 扩展用法（sessionStorage）
 ```javascript
-import { hookFactory, getWindowStorage } from 'rh-storage'
-const useStorage = hookFactory(getWindowStorage(window.sessionStorage));
+import { hookFactory } from 'rh-storage'
+const useStorage = hookFactory(window.sessionStorage);
 export default useStorage
 ```
 
@@ -51,4 +51,18 @@ function getCryptoStorage(Storage){
 }
 const cryptoStorage = getCryptoStorage(window.sessionStorage)
 export default cryptoStorage;
+```
+# 多页面同步（storage event）
+```javascript
+import { hookFactory, getListener, addWindowListener, CLEAR} from 'rh-storage'
+const listener = getListener();
+const [,updateValue] = listener;
+addWindowListener({
+    create:(key, value)=>updateValue(key, value),
+    update:(key, value)=>updateValue(key, value),
+    remove:(key)=>updateValue(key),
+    clear:()=>updateValue(CLEAR),
+})
+const useStorage = hookFactory(window.localStorage, listener);
+export default useStorage
 ```

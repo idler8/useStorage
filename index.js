@@ -1,51 +1,67 @@
 import { useCallback, useEffect, useState } from 'react';
-export function addWindowListener(Storage){
-  const handler = ({key,oldValue,newValue})=>{
-    if(key === undefined) return Storage.clear();
-    if(!newValue === undefined) return Storage.remove(key);
-    if(!oldValue === undefined) return Storage.create(key,newValue);
-    return Storage.update(key,newValue);
+export const CREATE = Symbol('Storage.Create')
+export const UPDATE = Symbol('Storage.Update')
+export const REMOVE = Symbol('Storage.Remove')
+export const CLEAR = Symbol('Storage.Clear')
+export function addWindowListener(Storage) {
+  const handler = ({ key, oldValue, newValue }) => {
+    if (key === undefined) return Storage.clear();
+    if (!newValue === undefined) return Storage.remove(key);
+    if (!oldValue === undefined) return Storage.create(key, newValue);
+    return Storage.update(key, newValue);
   }
-  window.addEventListener('storage',handler)
-  return ()=>window.removeEventListener(handler)
+  window.addEventListener('storage', handler)
+  return () => window.removeEventListener(handler)
 }
-export function hookFactory(Storage){
-  const Cache = {};
-  const Listener = [];
-  return function useStorage(key) {
-    const [ value, setValue ] = useState(() => Storage.get(key));
-    const updateValue = useCallback((value) => Storage.update(key, value), [ key ]);
-    useEffect(() => {
-      setValue(Storage.get(key));
-      const handler = (keyChange) => keyChange === key && setValue(Cache[key]);
-      Listener.push(handler);
-      return () => Listener.splice(Listener.indexOf(handler), 1);
-    }, [ key ]);
-    return [ value, updateValue ];
-  }
-}
-export function getWindowStorage(Storage){
+export function getJsonStorage(Storage) {
   return {
-    get(key){
+    getItem(key) {
       try {
         return JSON.parse(Storage.getItem(key));
       } catch (e) {
         return null;
       }
     },
-    update(key,value){
+    setItem(key, value) {
       Storage.setItem(key, JSON.stringify(value))
     },
-    remove(key){
-      Storage.removeItem(key);
+    removeItem(key) {
+      Storage.removeItem(key)
     },
-    clear(){
+    clear() {
       Storage.clear();
-    },
-    create(key, value){
-      this.update(key,value)
     }
   }
 }
-const useStorage = hookFactory(getWindowStorage(localStorage))
+export function getListener() {
+  const Listener = [];
+  const addListener = (key, onChange) => {
+    const handler = (keyChange, value) => {
+      if(keyChange === CLEAR) onChange();
+      if(keyChange === key) onChange(value);
+    };
+    Listener.push(handler);
+    return () => Listener.splice(Listener.indexOf(handler), 1);
+  }
+  const updateValue = (key, value) => {
+    Listener.forEach((fn) => fn(key, value));
+  }
+  return [addListener, updateValue];
+}
+export function hookFactory(Storage, [addListener, updateValue] = getListener()) {
+  const jsonStorage = getJsonStorage(Storage);
+  return function useStorage(key) {
+    const [value, setValue] = useState(() => jsonStorage.getItem(key));
+    const onChange = useCallback((value) => {
+      jsonStorage.setItem(key, value);
+      updateValue(key, value);
+    }, [key]);
+    useEffect(() => {
+      setValue(jsonStorage.getItem(key));
+      return addListener(key, setValue);
+    }, [key]);
+    return [value, onChange];
+  }
+}
+const useStorage = hookFactory(getJsonStorage(window.localStorage))
 export default useStorage;
